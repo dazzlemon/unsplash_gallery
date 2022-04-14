@@ -11,17 +11,16 @@ class UnsplashGalleryApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
     MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Unsplash Gallery',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const UnsplashGallery(title: 'Flutter Demo Home Page'),
+      home: const UnsplashGallery(),
     );
 }
 
 /// This class fetches the data from unsplash,
 /// and passes it to Gallery, which is presentational component
 class UnsplashGallery extends StatefulWidget {
-  const UnsplashGallery({Key? key, required this.title}) : super(key: key);
-  final String title;
+  const UnsplashGallery({Key? key}) : super(key: key);
 
   @override
   State<UnsplashGallery> createState() => _UnsplashGalleryState();
@@ -61,24 +60,29 @@ class ThumbWithText extends StatelessWidget {
 		);
 }
 
-/// This class shows list of image records,
-/// when one of them is clicked, that image is shown fullscreen
-// class Gallery
+class FullScreenImage extends StatelessWidget {
+	final Image image;
+  const FullScreenImage(this.image, {Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) =>
+    Expanded(
+			child: image
+		);
+}
 
 class _UnsplashGalleryState extends State<UnsplashGallery> {
 	String urlBase = "https://api.unsplash.com/photos/?client_id=";
 	String urlId =
 		"ab3411e4ac868c2646c0ed488dfd919ef612b04c264f3374c97fff98ed253dc9";
 
-// -------------------------------------------------------------------------- //
-
-   List data = [];
-   bool flag1 = false;
+	List data = [];
+	bool flag = false;
 
 	getData() async {
 		http.Response response = await http.get(Uri.parse(urlBase + urlId));
 		data = json.decode(response.body);
-		setState(() => flag1 = true);
+		setState(() => flag = true);
 	}
 
 	@override
@@ -87,20 +91,26 @@ class _UnsplashGalleryState extends State<UnsplashGallery> {
 		super.initState();
 	}
 
-// -------------------------------------------------------------------------- //
-
   @override
   Widget build(BuildContext context) =>
     Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
       body: Center(
         child: GridView.count(
           crossAxisCount: (MediaQuery.of(context).size.width / 160).round(),
-          children: data.map((imgData) => ThumbWithText(
-						imgData["user"]["username"],
-						Image(image: NetworkImage(imgData["urls"]["thumb"]))
-					)).toList()
-        ),
+          children: data.map((imgData) =>
+						GestureDetector(
+							onTap: () => Navigator.push(context, MaterialPageRoute(
+								builder: (context) => FullScreenImage(
+									Image(image: NetworkImage(imgData["urls"]["full"]))
+								)
+							)),
+							child: ThumbWithText(
+								imgData["user"]["username"],
+								Image(image: NetworkImage(imgData["urls"]["thumb"]))
+							)
+						)
+        	).toList()
+				)
       )
     );
 }
