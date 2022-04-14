@@ -60,18 +60,19 @@ class _UnsplashGalleryState extends State<UnsplashGallery> {
     Scaffold(
       appBar: AppBar(title: Text(widget.title)),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: GridView.count(
+          crossAxisCount: (MediaQuery.of(context).size.width / 160).round(),
           children: data.map((imgData) =>
-						Image(image: NetworkImage(imgData["urls"]["regular"])
-					)).toList()
-					// children: <Widget>[
-            // const Text('You have pushed the button this many times:'),
-            // Text(
-              // '$_counter',
-              // style: Theme.of(context).textTheme.headline4,
-            // ),
-          // ],
+						Column(
+							children: <Widget>[
+								Text(imgData["user"]["username"]),
+								AspectRatio(
+									aspectRatio: 1.2,// to fit text
+									child: Image(image: NetworkImage(imgData["urls"]["thumb"]))
+								)
+							],
+						)
+					).toList()
         ),
       )
     );
