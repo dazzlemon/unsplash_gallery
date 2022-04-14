@@ -1,33 +1,59 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 
 void main() =>
-  runApp(const MyApp());
+  runApp(const UnsplashGalleryApp());
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+class UnsplashGalleryApp extends StatelessWidget {
+  const UnsplashGalleryApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) =>
     MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const UnsplashGallery(title: 'Flutter Demo Home Page'),
     );
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
+/// This class fetches the data from unsplash,
+/// and passes it to Gallery, which is presentational component
+class UnsplashGallery extends StatefulWidget {
+  const UnsplashGallery({Key? key, required this.title}) : super(key: key);
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<UnsplashGallery> createState() => _UnsplashGalleryState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+/// This class shows list of image records,
+/// when one of them is clicked, that image is shown fullscreen
+// class Gallery
 
-  void _incrementCounter() =>
-    setState(() => _counter++);
+class _UnsplashGalleryState extends State<UnsplashGallery> {
+	String urlBase = "https://api.unsplash.com/photos/?client_id=";
+	String urlId =
+		"ab3411e4ac868c2646c0ed488dfd919ef612b04c264f3374c97fff98ed253dc9";
+
+// -------------------------------------------------------------------------- //
+
+   List data = [];
+   bool flag1 = false;
+
+	getData() async {
+		http.Response response = await http.get(Uri.parse(urlBase + urlId));
+		data = json.decode(response.body);
+		setState(() => flag1 = true);
+	}
+
+	@override
+	void initState() {
+		getData();
+		super.initState();
+	}
+
+// -------------------------------------------------------------------------- //
 
   @override
   Widget build(BuildContext context) =>
@@ -36,19 +62,17 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
+          children: data.map((imgData) =>
+						Image(image: NetworkImage(imgData["urls"]["regular"])
+					)).toList()
+					// children: <Widget>[
+            // const Text('You have pushed the button this many times:'),
+            // Text(
+              // '$_counter',
+              // style: Theme.of(context).textTheme.headline4,
+            // ),
+          // ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
+      )
     );
 }
