@@ -27,6 +27,40 @@ class UnsplashGallery extends StatefulWidget {
   State<UnsplashGallery> createState() => _UnsplashGalleryState();
 }
 
+class ThumbWithText extends StatelessWidget {
+	final String text;
+	final Image image;
+
+  const ThumbWithText(this.text, this.image, {Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) =>
+    Container(
+			decoration: BoxDecoration(
+				border: Border.all(
+					width: 0.5,
+					color: Colors.grey,
+				)
+			),
+			child: Column(
+				children: <Widget>[
+					Text(text),
+					const SizedBox(height: 5),
+					Container(
+					margin: const EdgeInsets.only(left: 10, right: 10),
+					child: const Divider(
+						color: Colors.grey,
+						height: 0.5,
+					)),
+					const SizedBox(height: 5),
+					Expanded(
+						child: image
+					)
+				],
+			)
+		);
+}
+
 /// This class shows list of image records,
 /// when one of them is clicked, that image is shown fullscreen
 // class Gallery
@@ -62,17 +96,10 @@ class _UnsplashGalleryState extends State<UnsplashGallery> {
       body: Center(
         child: GridView.count(
           crossAxisCount: (MediaQuery.of(context).size.width / 160).round(),
-          children: data.map((imgData) =>
-						Column(
-							children: <Widget>[
-								Text(imgData["user"]["username"]),
-								AspectRatio(
-									aspectRatio: 1.2,// to fit text
-									child: Image(image: NetworkImage(imgData["urls"]["thumb"]))
-								)
-							],
-						)
-					).toList()
+          children: data.map((imgData) => ThumbWithText(
+						imgData["user"]["username"],
+						Image(image: NetworkImage(imgData["urls"]["thumb"]))
+					)).toList()
         ),
       )
     );
