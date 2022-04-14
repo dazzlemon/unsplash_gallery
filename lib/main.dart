@@ -60,16 +60,18 @@ class ThumbWithText extends StatelessWidget {
 		);
 }
 
-class FullScreenImage extends StatelessWidget {
-	final Image image;
-  const FullScreenImage(this.image, {Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) =>
-    Expanded(
-			child: image
-		);
-}
+Widget networkImageLoadingBuilder(
+	BuildContext context, Widget child, ImageChunkEvent? loadingProgress
+) => loadingProgress == null
+	? child
+	: Center(
+		child: CircularProgressIndicator(
+			value: loadingProgress.expectedTotalBytes != null
+				? loadingProgress.cumulativeBytesLoaded /
+						loadingProgress.expectedTotalBytes!
+				: null
+		),
+	);
 
 class _UnsplashGalleryState extends State<UnsplashGallery> {
 	String urlBase = "https://api.unsplash.com/photos/?client_id=";
@@ -77,12 +79,10 @@ class _UnsplashGalleryState extends State<UnsplashGallery> {
 		"ab3411e4ac868c2646c0ed488dfd919ef612b04c264f3374c97fff98ed253dc9";
 
 	List data = [];
-	bool flag = false;
 
 	getData() async {
 		http.Response response = await http.get(Uri.parse(urlBase + urlId));
 		data = json.decode(response.body);
-		setState(() => flag = true);
 	}
 
 	@override
@@ -95,22 +95,37 @@ class _UnsplashGalleryState extends State<UnsplashGallery> {
   Widget build(BuildContext context) =>
     Scaffold(
       body: Center(
-        child: GridView.count(
-          crossAxisCount: (MediaQuery.of(context).size.width / 160).round(),
-          children: data.map((imgData) =>
-						GestureDetector(
-							onTap: () => Navigator.push(context, MaterialPageRoute(
-								builder: (context) => FullScreenImage(
-									Image(image: NetworkImage(imgData["urls"]["full"]))
-								)
-							)),
-							child: ThumbWithText(
-								imgData["user"]["username"],
-								Image(image: NetworkImage(imgData["urls"]["thumb"]))
-							)
-						)
-        	).toList()
-				)
+        child: FutureBuilder(
+					future: http.get(Uri.parse(urlBase + urlId)),
+					builder: (context, AsyncSnapshot<http.Response> snapshot) {
+						if (snapshot.connectionState == ConnectionState.done) {
+							json.decode(snapshot.data!.body);
+							return GridView.count(
+								crossAxisCount:
+									(MediaQuery.of(context).size.width / 160).round(),
+								children: data.map((imgData) =>
+									GestureDetector(
+										onTap: () => Navigator.push(context, MaterialPageRoute(
+											builder: (context) => Image.network(
+												imgData["urls"]["full"],
+												loadingBuilder: networkImageLoadingBuilder
+											)
+										)),
+										child: ThumbWithText(
+											imgData["user"]["username"],
+											Image.network(
+												imgData["urls"]["thumb"],
+												loadingBuilder: networkImageLoadingBuilder
+											)
+										)
+									)
+								).toList()
+							);
+						}
+						return const CircularProgressIndicator();
+					}
+				),
+				
       )
     );
 }
